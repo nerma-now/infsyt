@@ -1,0 +1,81 @@
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - certbot_data:/etc/letsencrypt:ro
+      - certbot_www:/var/www/certbot:ro
+    networks:
+      - my_network
+    depends_on:
+      - certbot
+    restart: unless-stopped
+
+  certbot:
+    container_name: certbot
+    env_file:
+      - .env
+    volumes:
+      - certbot_data:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    image: certbot/certbot
+    entrypoint: "/bin/sh -c"
+    command: >
+      "trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;"
+    networks:
+      - my_network
+    restart: unless-stopped
+
+  app:
+    image: node:18                  # Используйте свой образ (например, php:8.1-fpm)
+    container_name: app
+    working_dir: /app
+    volumes:
+      - ./app:/app                   # Монтируем код приложения
+    command: npm start               # Команда для запуска приложения
+    environment:
+      - NODE_ENV=production
+    ports:
+      - "3000:3000"
+    networks:
+      - my_network
+    depends_on:
+      - postgres
+      - adminer
+
+  postgres:
+    image: postgres:16
+    container_name: my_postgres
+    environment:
+      POSTGRES_USER: myuser     # Логин админа БД
+      POSTGRES_PASSWORD: mypass # Пароль
+      POSTGRES_DB: mydb        # Имя базы
+    ports:
+      - "5432:5432"  # Порт для внешних подключений (если нужно)
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d  
+    networks:
+      - my_network
+
+  adminer:
+    image: adminer
+    container_name: my_adminer
+    depends_on:
+      - postgres
+    networks:
+      - my_network
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres_data:
+  certbot_data:
+  certbot_www:
+
+networks:
+  my_network:
