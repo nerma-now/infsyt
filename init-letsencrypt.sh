@@ -20,10 +20,10 @@ http {
 }
 EOF
 
-docker-compose up -d nginx
+docker compose up -d nginx
 sleep 5
 
-docker-compose run --rm certbot certonly \
+docker compose run --rm certbot certonly \
   --webroot \
   --webroot-path /var/www/certbot \
   --email $DOMAIN_EMAIL \
@@ -33,6 +33,6 @@ docker-compose run --rm certbot certonly \
   -d www.$DOMAIN_URL \
   --force-renewal
 
-docker-compose down
+docker compose down
 
-docker-compose up -d
+docker compose up -d
