@@ -31,21 +31,21 @@ services:
     restart: unless-stopped
 
   app:
-    image: node:18                  # Используйте свой образ (например, php:8.1-fpm)
+    build:
+      context: ./app
+      dockerfile: Dockerfile
     container_name: app
-    working_dir: /app
-    volumes:
-      - ./app:/app                   # Монтируем код приложения
-    command: npm start               # Команда для запуска приложения
     environment:
       - NODE_ENV=production
-    ports:
-      - "3000:3000"
     networks:
       - my_network
     depends_on:
       - postgres
       - adminer
+    volumes:
+      - ./app/node_modules:/app/node_modules  # Для разработки (можно убрать в production)
+    ports:
+      - "3000:3000"
 
   postgres:
     image: postgres:16
