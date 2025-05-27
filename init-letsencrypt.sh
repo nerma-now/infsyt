@@ -1,10 +1,8 @@
 #!/bin/bash
 
-# Параметры из .env файла (или укажите явно)
-DOMAIN_EMAIL=${DOMAIN_EMAIL:-"your@email.com"}  # Если нет в .env
-DOMAIN_URL=${DOMAIN_URL:-"tsiul.ru"}           # Если нет в .env
+DOMAIN_EMAIL=${DOMAIN_EMAIL:-"your@email.com"}
+DOMAIN_URL=${DOMAIN_URL:-"tsiul.ru"}
 
-# Создаем временную конфигурацию Nginx для ACME-проверки
 mkdir -p ./nginx
 cat > ./nginx/nginx.conf <<EOF
 events {}
@@ -22,12 +20,10 @@ http {
 }
 EOF
 
-# Запускаем временный Nginx и Certbot
-docker compose up -d nginx  # Запускаем только Nginx
-sleep 5  # Ждем инициализации
+docker-compose up -d nginx
+sleep 5
 
-# Получаем сертификат (webroot-метод)
-docker compose run --rm certbot certonly \
+docker-compose run --rm certbot certonly \
   --webroot \
   --webroot-path /var/www/certbot \
   --email $DOMAIN_EMAIL \
@@ -37,8 +33,6 @@ docker compose run --rm certbot certonly \
   -d www.$DOMAIN_URL \
   --force-renewal
 
-# Останавливаем временный Nginx
-docker compose down
+docker-compose down
 
-# Запускаем полноценный сервис с SSL
-docker compose up -d
+docker-compose up -d
